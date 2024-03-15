@@ -1,0 +1,220 @@
+void setup() {
+  size(400, 400);
+  resetFrogPosition();
+  initializeLogs();
+  initializeCars(); // Add this line to initialize cars
+}
+
+void draw() {
+  background(255);
+  drawRoad();
+  drawWater();
+  drawLogs();
+  drawCars(); // Add this line to draw cars
+  drawFrog();
+  moveLogs();
+  moveCars(); // Add this line to move cars
+  checkCollisions();
+  displayScore();
+}
+
+void drawRoad() {
+  fill(100);
+  rect(0, roadY, width, height - roadY);
+}
+
+void drawWater() {
+  fill(0, 0, 255);
+  rect(0, waterY, width, roadY - waterY);
+
+  // Draw lily pads
+  fill(0, 128, 0);
+  int numPads = 5; // Number of lily pads
+  int padSize = 40; // Size of each lily pad
+  int padSpacing = width / (numPads + 1); // Spacing between lily pads
+
+  for (int i = 1; i <= numPads; i++) {
+    float padX = i * padSpacing;
+    float padY = waterY + (roadY - waterY) / 2;
+    ellipse(padX, padY, padSize, padSize);
+  }
+}
+
+void drawFrog() {
+  fill(0, 255, 0);
+  ellipse(frogX, frogY, frogSize, frogSize);
+
+  // Draw eyes
+  fill(0);
+  ellipse(frogX - frogSize / 4, frogY - frogSize / 4, frogSize / 5, frogSize / 5);
+  ellipse(frogX + frogSize / 4, frogY - frogSize / 4, frogSize / 5, frogSize / 5);
+}
+
+void drawLogs() {
+  fill(139, 69, 19); // Brown color
+  for (int i = 0; i < logs.size(); i++) {
+    Log log = logs.get(i);
+    rect(log.x, log.y, log.width, log.height);
+  }
+}
+
+void drawCars() {
+  fill(255, 0, 0); // Red color
+  for (int i = 0; i < cars.size(); i++) {
+    Car car = cars.get(i);
+    rect(car.x, car.y, car.width, car.height);
+  }
+}
+
+void moveLogs() {
+  for (int i = 0; i < logs.size(); i++) {
+    Log log = logs.get(i);
+
+    // Check if the log is not on a lily pad
+    boolean onLilyPad = false;
+    for (int j = 1; j <= numPads; j++) {
+      float padX = j * padSpacing;
+      float padY = waterY + (roadY - waterY) / 2;
+      if (log.x + log.width >= padX - padSize / 2 && log.x <= padX + padSize / 2 && log.y == padY) {
+        onLilyPad = true;
+        break;
+      }
+    }
+
+    if (!onLilyPad) {
+      log.x += log.speed;
+      if (log.x > width) {
+        log.x = -log.width;
+      }
+    }
+  }
+}
+
+void moveCars() {
+  for (int i = 0; i < cars.size(); i++) {
+    Car car = cars.get(i);
+    car.x += car.speed;
+    if (car.x > width) {
+      car.x = -car.width;
+    }
+  }
+}
+
+void checkCollisions() {
+  // Check collisions with logs
+  for (int i = 0; i < logs.size(); i++) {
+    Log log = logs.get(i);
+    if (frogY + frogSize / 2 > log.y && frogY - frogSize / 2 < log.y + log.height) {
+      if (frogX + frogSize / 2 > log.x && frogX - frogSize / 2 < log.x + log.width) {
+        frogOnLog = true;
+        frogY = log.y;
+        return;
+      }
+    }
+  }
+
+  // Check collisions with cars
+  for (int i = 0; i < cars.size(); i++) {
+    Car car = cars.get(i);
+    if (frogY + frogSize / 2 > car.y && frogY - frogSize / 2 < car.y + car.height) {
+      if (frogX + frogSize / 2 > car.x && frogX - frogSize / 2 < car.x + car.width) {
+        gameOver();
+       }
+    }
+  }
+
+  frogOnLog = false;
+  if (frogY <= waterY) {
+    score++;
+    resetFrogPosition();
+  }
+}
+
+void displayScore() {
+  fill(0);
+  textSize(20);
+  text("Score: " + score, 10, 30);
+}
+
+void resetFrogPosition() {
+  frogX = width / 2;
+  frogY = height - frogSize / 2;
+}
+
+
+void initializeLogs() {
+  logs = new ArrayList<Log>();
+  for (int i = 0; i < 3; i++) {
+    logs.add(new Log(-i * 150, waterY + 20, 100, 20, 2));
+  }
+}
+
+void initializeCars() {
+  cars = new ArrayList<Car>();
+  int carInitialY = roadY + 50; // Adjust this value as desired to place cars below the water level
+  for (int i = 0; i < 5; i++) {
+    cars.add(new Car(i * 100, carInitialY, 80, 30, -3)); // Adjust the positions and speeds of the cars as desired
+  }
+}
+
+
+class Log {
+  int x;
+  int y;
+  int width;
+  int height;
+  int speed;
+
+  Log(int initialX, int y, int width, int height, int speed) {
+    x = initialX;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.speed = speed;
+  }
+}
+
+class Car {
+  int x;
+  int y;
+  int width;
+  int height;
+  int speed;
+
+  Car(int initialX, int y, int width, int height, int speed) {
+    x = initialX;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.speed = speed;
+  }
+}
+
+int frogX, frogY;
+int frogSize = 20;
+int roadY = 200;
+int waterY = 100;
+int score = 0;
+boolean frogOnLog = false;
+
+ArrayList<Log> logs;
+ArrayList<Car> cars;
+int numPads = 5; // Number of lily pads
+int padSize = 40; // Size of each lily pad
+int padSpacing; // Spacing between lily pads
+
+void keyPressed() {
+  if (keyCode == UP && (frogOnLog || frogY > waterY)) {
+    frogY -= frogOnLog ? 0 : frogSize / 2;
+  } else if (keyCode == DOWN && frogY < height - frogSize / 2) {
+    frogY += frogSize / 2;
+  } else if (keyCode == LEFT && frogX > frogSize / 2) {
+    frogX -= frogSize / 2;
+  } else if (keyCode == RIGHT && frogX < width - frogSize / 2) {
+    frogX += frogSize / 2;
+  }
+}
+
+void gameOver() {
+  // Add your game over logic here, such as displaying a message or resetting the game.
+}
